@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="./">
+  <title>Web MCP Auditor — independent Lighthouse-style audit for Web MCP support</title>
+  <meta name="description" content="Independent open-source auditor for Web MCP (navigator.modelContext) on any URL. 16 checks across 5 categories. Runs Chrome 149+ headless. No data stored.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Marko Fedorenko">
+  <meta name="theme-color" content="#0f172a">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Web MCP Auditor">
+  <meta property="og:description" content="Independent Lighthouse-style audit for Web MCP support — 16 checks across 5 categories. Open source, no data stored.">
+  <meta property="og:site_name" content="Web MCP Auditor">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Web MCP Auditor">
+  <meta name="twitter:description" content="Independent Lighthouse-style audit for Web MCP support.">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Web MCP Auditor",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Cross-platform (web)",
+    "description": "Lighthouse-style auditor for Web MCP support on any URL. 16 checks across 5 categories.",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="header-text">
+        <h1 data-i18n="appTitle">Web MCP Auditor</h1>
+        <p class="tagline">
+          <span data-i18n="tagline">Lighthouse-style audit for Web MCP on any URL.</span>
+          <a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noreferrer" data-i18n="aboutWebMcp">Web MCP</a>
+        </p>
+      </div>
+      <div class="lang-switch">
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+        <button type="button" class="lang-btn" data-lang="uk">UK</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Trust strip — visible immediately, no audit needed -->
+  <section class="trust-strip" aria-label="Trust signals">
+    <div class="container trust-grid">
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">⚙</div>
+        <div class="trust-body">
+          <strong data-i18n="trustMethod">16 checks · 5 categories</strong>
+          <span data-i18n="trustMethodSub">Weighted scoring, transparent rules</span>
+        </div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">📋</div>
+        <div class="trust-body">
+          <strong data-i18n="trustSpec">Tracks the Web MCP spec</strong>
+          <span data-i18n="trustSpecSub">Chrome 149+ origin trial &amp; W3C draft</span>
+        </div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">🔓</div>
+        <div class="trust-body">
+          <strong data-i18n="trustOss">Open source · MIT</strong>
+          <span><a href="https://github.com/marko-fedorenko/web-mcp-auditor" target="_blank" rel="noreferrer" data-i18n="trustOssSub">View source on GitHub →</a></span>
+        </div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon" aria-hidden="true">🛡</div>
+        <div class="trust-body">
+          <strong data-i18n="trustPrivacy">No data stored</strong>
+          <span data-i18n="trustPrivacySub">Reports live only in your browser</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <section class="audit-form-section">
+      <form id="audit-form" class="audit-form">
+        <label for="url-input" class="visually-hidden" data-i18n="metaUrl">URL</label>
+        <input id="url-input" name="url" type="url" required
+               data-i18n-attr-placeholder="urlPlaceholder"
+               placeholder="https://example.com"
+               autocomplete="url"
+               spellcheck="false">
+        <label class="exec-toggle">
+          <input id="execute-toggle" type="checkbox">
+          <span data-i18n="executeToggle">Execute tool calls (intrusive)</span>
+        </label>
+        <button type="submit" id="audit-btn" data-i18n="runAudit">Run audit</button>
+      </form>
+
+      <div class="examples">
+        <span class="examples-label" data-i18n="tryFixture">Try a fixture:</span>
+        <button type="button" class="example-btn" data-url="fixtures/imperative-only.html" data-i18n="fixtureImp">Imperative-only</button>
+        <button type="button" class="example-btn" data-url="fixtures/declarative-only.html" data-i18n="fixtureDecl">Declarative-only</button>
+        <button type="button" class="example-btn" data-url="fixtures/mixed-bad.html" data-i18n="fixtureMixed">Mixed/bad</button>
+      </div>
+    </section>
+
+    <section id="status" class="status hidden" aria-live="polite"></section>
+
+    <section id="report" class="report hidden"></section>
+
+    <!-- Always-visible methodology + sources panels (move below the report when one exists) -->
+    <section id="info-panels" class="info-panels">
+      <section class="info-panel">
+        <details>
+          <summary><span class="info-summary-label" data-i18n="methodologyTitle">Methodology — what we check and how we score</span></summary>
+          <div class="info-body" id="methodology-body"></div>
+        </details>
+      </section>
+
+      <section class="info-panel">
+        <details>
+          <summary><span class="info-summary-label" data-i18n="sourcesTitle">Sources &amp; references</span></summary>
+          <div class="info-body">
+            <ul class="source-list" id="source-list"></ul>
+          </div>
+        </details>
+      </section>
+
+      <section class="info-panel">
+        <details>
+          <summary><span class="info-summary-label" data-i18n="privacyTitle">Privacy &amp; what we don't do</span></summary>
+          <div class="info-body" id="privacy-body"></div>
+        </details>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <div class="footer-brand" data-i18n="appTitle">Web MCP Auditor</div>
+        <div class="footer-meta">
+          <span data-i18n="footerVersion">Version</span> <code id="footer-version">0.2.0</code>
+          · <span data-i18n="footerUpdated">Checks updated</span> <time id="footer-updated">2026-05-25</time>
+        </div>
+        <div class="footer-meta">
+          <span data-i18n="footerLicense">MIT-licensed</span> ·
+          <a href="https://github.com/marko-fedorenko/web-mcp-auditor" target="_blank" rel="noreferrer" data-i18n="footerRepo">Source on GitHub</a> ·
+          <a href="https://github.com/marko-fedorenko/web-mcp-auditor/issues" target="_blank" rel="noreferrer" data-i18n="footerIssues">Report an issue</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <div class="footer-heading" data-i18n="footerApiHeading">API</div>
+        <div class="footer-meta">
+          <code>POST api/audit</code>
+          · <a href="api/health" target="_blank" data-i18n="healthLink">health</a>
+        </div>
+        <div class="footer-meta footer-disclaimer" data-i18n="footerDisclaimer">
+          Independent tool. Not affiliated with Google, the Chrome team, or W3C.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture: mixed (intentionally bad)</title>
+</head>
+<body>
+  <h1>Mixed/bad-metadata fixture</h1>
+  <p>Intentionally violates several quality checks.</p>
+
+  <!-- Declarative tool NOT inside a form -->
+  <div toolname="orphan_tool" tooldescription="bad">
+    <input name="foo" type="text">
+  </div>
+
+  <!-- Form with missing param descriptions -->
+  <form toolname="incomplete_form" tooldescription="Form that lacks param annotations." action="/x">
+    <input name="a" type="text">
+    <input name="b" type="text">
+    <button type="submit">Go</button>
+  </form>
+
+  <script>
+    (function () {
+      const mc = navigator && navigator.modelContext;
+      if (!mc || typeof mc.registerTool !== 'function') return;
+
+      // Short description (< 20 chars)
+      mc.registerTool({
+        name: 'X',
+        description: 'too short',
+        inputSchema: { type: 'object', properties: { q: {} } },
+        execute: async () => 'ok'
+      });
+
+      // Invalid inputSchema (additionalProperties is a string)
+      mc.registerTool({
+        name: 'bad_schema',
+        description: 'This tool has an invalid JSON Schema as inputSchema.',
+        inputSchema: { type: 'object', additionalProperties: 'yes' },
+        execute: async () => 'ok'
+      });
+
+      // Duplicate name
+      mc.registerTool({
+        name: 'bad_schema',
+        description: 'Duplicate registration of bad_schema.',
+        inputSchema: { type: 'object' },
+        execute: async () => 'ok'
+      });
+
+      // Late registration (after 2.5s)
+      setTimeout(() => {
+        mc.registerTool({
+          name: 'late_tool',
+          description: 'Registered after the 2 second window.',
+          inputSchema: { type: 'object' },
+          execute: async () => 'late'
+        });
+      }, 2500);
+    })();
+  </script>
+</body>
+</html>

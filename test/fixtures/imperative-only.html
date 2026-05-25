@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture: imperative-only WebMCP</title>
+</head>
+<body>
+  <h1>Imperative-only fixture</h1>
+  <p>Registers three tools via <code>navigator.modelContext.registerTool</code>.</p>
+  <script>
+    (function () {
+      const mc = navigator && navigator.modelContext;
+      if (!mc || typeof mc.registerTool !== 'function') {
+        document.body.insertAdjacentHTML('beforeend', '<p style="color:#c00">navigator.modelContext.registerTool not available.</p>');
+        return;
+      }
+
+      mc.registerTool({
+        name: 'add_to_cart',
+        description: 'Adds an item to the shopping cart by SKU. Quantity defaults to 1.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            sku: { type: 'string', description: 'Product SKU' },
+            quantity: { type: 'integer', minimum: 1, default: 1 }
+          },
+          required: ['sku']
+        },
+        annotations: { readOnlyHint: false, untrustedContentHint: true },
+        execute: async ({ sku, quantity }) => `Added ${quantity || 1} of ${sku} to cart`
+      });
+
+      mc.registerTool({
+        name: 'get_cart_total',
+        description: 'Returns the current cart total in the page currency.',
+        inputSchema: { type: 'object', properties: {} },
+        annotations: { readOnlyHint: true },
+        execute: async () => ({ total: 42.5, currency: 'USD' })
+      });
+
+      mc.registerTool({
+        name: 'apply_promo',
+        description: 'Applies a promo code to the cart. Returns the resulting discount or an error string.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', minLength: 3, maxLength: 32 }
+          },
+          required: ['code']
+        },
+        annotations: { readOnlyHint: false },
+        execute: async ({ code }) => code === 'SAVE10' ? { discount: 10 } : 'invalid code'
+      });
+    })();
+  </script>
+</body>
+</html>
