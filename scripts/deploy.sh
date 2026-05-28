@@ -32,15 +32,18 @@ for arg in "$@"; do
 done
 
 if [[ $EUID -ne 0 ]]; then
-  echo "❌ Run as root (or via sudo). Currently: $(whoami)" >&2
+  echo "ERROR: Run as root (or via sudo). Currently: $(whoami)" >&2
   exit 1
 fi
 
+DOMAIN_LABEL="${DOMAIN:-(none, HTTP on IP)}"
+EMAIL_LABEL="${EMAIL:-(skipping Lets Encrypt)}"
+
 echo "============================================="
-echo "  Web MCP Auditor — automated deploy"
+echo "  Web MCP Auditor - automated deploy"
 echo "============================================="
-echo "  Domain:  ${DOMAIN:-<none — HTTP on IP>}"
-echo "  Email:   ${EMAIL:-<skipping Let's Encrypt>}"
+echo "  Domain:  $DOMAIN_LABEL"
+echo "  Email:   $EMAIL_LABEL"
 echo "  Port:    $PORT"
 echo "  Dir:     $APP_DIR"
 echo "  Repo:    $REPO"
@@ -48,7 +51,7 @@ echo "============================================="
 echo ""
 
 # -------- 1. System packages --------
-echo "▶ [1/8] Installing system packages…"
+echo "==> [1/8] Installing system packages..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq curl ca-certificates gnupg git nginx ufw \
@@ -60,25 +63,25 @@ apt-get install -y -qq curl ca-certificates gnupg git nginx ufw \
 
 # Node.js from NodeSource
 if ! command -v node >/dev/null 2>&1 || [[ "$(node --version | sed 's/v//' | cut -d. -f1)" -lt "$NODE_MAJOR" ]]; then
-  echo "  → Installing Node.js $NODE_MAJOR via NodeSource…"
+  echo "  -> Installing Node.js $NODE_MAJOR via NodeSource..."
   curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - >/dev/null
   apt-get install -y -qq nodejs
 fi
-echo "  ✓ node $(node --version), npm $(npm --version)"
+echo "  OK node $(node --version), npm $(npm --version)"
 
 # -------- 2. App user --------
 APP_USER="webmcp"
 if ! id "$APP_USER" >/dev/null 2>&1; then
-  echo "▶ [2/8] Creating system user '$APP_USER'…"
+  echo "==> [2/8] Creating system user '$APP_USER'..."
   useradd --system --create-home --shell /bin/bash --home-dir "/home/$APP_USER" "$APP_USER"
 else
-  echo "▶ [2/8] User '$APP_USER' already exists, skipping."
+  echo "==> [2/8] User '$APP_USER' already exists, skipping."
 fi
 
 # -------- 3. Clone or update repo --------
-echo "▶ [3/8] Fetching source from $REPO…"
+echo "==> [3/8] Fetching source from $REPO..."
 if [[ -d "$APP_DIR/.git" ]]; then
-  echo "  → Repo exists, updating…"
+  echo "  -> Repo exists, updating..."
   sudo -u "$APP_USER" git -C "$APP_DIR" fetch --depth 1 origin main
   sudo -u "$APP_USER" git -C "$APP_DIR" reset --hard origin/main
 else
@@ -89,26 +92,26 @@ else
 fi
 
 # -------- 4. npm install --------
-echo "▶ [4/8] Installing npm dependencies…"
+echo "==> [4/8] Installing npm dependencies..."
 cd "$APP_DIR"
 sudo -u "$APP_USER" -H bash -c "cd '$APP_DIR' && npm ci --omit=dev --no-audit --no-fund"
 
-# -------- 5. Install Chrome beta (≥149) --------
+# -------- 5. Install Chrome beta (>=149) --------
 CHROME_BIN=""
 if [[ -d "$APP_DIR/chrome" ]]; then
   CHROME_BIN="$(find "$APP_DIR/chrome" -name chrome -type f 2>/dev/null | head -1 || true)"
 fi
 if [[ -z "$CHROME_BIN" ]]; then
-  echo "▶ [5/8] Installing Chrome beta (≥149) via @puppeteer/browsers…"
+  echo "==> [5/8] Installing Chrome beta (>=149) via @puppeteer/browsers..."
   sudo -u "$APP_USER" -H bash -c "cd '$APP_DIR' && npx -y @puppeteer/browsers install chrome@beta --path='$APP_DIR/chrome'"
   CHROME_BIN="$(find "$APP_DIR/chrome" -name chrome -type f | head -1)"
 else
-  echo "▶ [5/8] Chrome already installed at $CHROME_BIN"
+  echo "==> [5/8] Chrome already installed at $CHROME_BIN"
 fi
-echo "  ✓ Chrome at: $CHROME_BIN"
+echo "  OK Chrome at: $CHROME_BIN"
 
 # -------- 6. systemd unit --------
-echo "▶ [6/8] Configuring systemd service…"
+echo "==> [6/8] Configuring systemd service..."
 cat > /etc/systemd/system/web-mcp-auditor.service <<EOF
 [Unit]
 Description=Web MCP Auditor
@@ -150,15 +153,15 @@ systemctl restart web-mcp-auditor.service
 sleep 3
 
 if systemctl is-active --quiet web-mcp-auditor.service; then
-  echo "  ✓ Service is running"
+  echo "  OK Service is running"
 else
-  echo "  ❌ Service failed to start. Logs:"
+  echo "  FAIL Service failed to start. Logs:"
   journalctl -u web-mcp-auditor.service -n 30 --no-pager
   exit 1
 fi
 
 # -------- 7. nginx --------
-echo "▶ [7/8] Configuring nginx reverse proxy…"
+echo "==> [7/8] Configuring nginx reverse proxy..."
 SERVER_NAME="${DOMAIN:-_}"
 cat > /etc/nginx/sites-available/web-mcp-auditor <<EOF
 server {
@@ -185,7 +188,7 @@ ln -sf /etc/nginx/sites-available/web-mcp-auditor /etc/nginx/sites-enabled/web-m
 rm -f /etc/nginx/sites-enabled/default
 nginx -t >/dev/null
 systemctl reload nginx
-echo "  ✓ nginx reloaded"
+echo "  OK nginx reloaded"
 
 # Open firewall (only if ufw is installed and active)
 if command -v ufw >/dev/null 2>&1; then
@@ -196,12 +199,12 @@ fi
 
 # -------- 8. Let's Encrypt (optional) --------
 if [[ -n "$DOMAIN" && -n "$EMAIL" ]]; then
-  echo "▶ [8/8] Obtaining Let's Encrypt certificate for $DOMAIN…"
+  echo "==> [8/8] Obtaining Lets Encrypt certificate for $DOMAIN..."
   apt-get install -y -qq certbot python3-certbot-nginx
   certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$EMAIL" --redirect --no-eff-email
-  echo "  ✓ HTTPS enabled"
+  echo "  OK HTTPS enabled"
 else
-  echo "▶ [8/8] Skipping Let's Encrypt (no DOMAIN+EMAIL provided)."
+  echo "==> [8/8] Skipping Lets Encrypt (no DOMAIN+EMAIL provided)."
 fi
 
 # -------- Smoke test --------
@@ -211,7 +214,7 @@ echo "  Smoke test"
 echo "============================================="
 sleep 2
 HEALTH=$(curl -fsS "http://127.0.0.1:$PORT/api/health" || echo '{"ok":false,"error":"connection failed"}')
-echo "  /api/health → $HEALTH"
+echo "  /api/health -> $HEALTH"
 
 if [[ -n "$DOMAIN" ]]; then
   URL="https://$DOMAIN/"
@@ -223,9 +226,9 @@ fi
 
 echo ""
 echo "============================================="
-echo "  ✅ DEPLOYED"
+echo "  DEPLOYED"
 echo "============================================="
 echo "  Visit:  $URL"
 echo "  Logs:   journalctl -u web-mcp-auditor -f"
-echo "  Update: bash $APP_DIR/scripts/deploy.sh  (re-runs this script)"
+echo "  Update: re-run the deploy.sh curl one-liner (idempotent)"
 echo "============================================="
