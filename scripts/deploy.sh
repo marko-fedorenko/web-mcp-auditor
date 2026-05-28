@@ -19,7 +19,7 @@ EMAIL=""
 REPO="${REPO:-https://github.com/marko-fedorenko/web-mcp-auditor.git}"
 APP_DIR="${APP_DIR:-/opt/web-mcp-auditor}"
 PORT="${PORT:-3000}"
-NODE_MAJOR="${NODE_MAJOR:-20}"
+NODE_MAJOR="${NODE_MAJOR:-22}"
 
 for arg in "$@"; do
   case $arg in
@@ -54,7 +54,7 @@ echo ""
 echo "==> [1/8] Installing system packages..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq curl ca-certificates gnupg git nginx ufw \
+apt-get install -y -qq curl ca-certificates gnupg git nginx ufw unzip \
   xvfb fonts-liberation \
   libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
   libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
@@ -94,7 +94,9 @@ fi
 # -------- 4. npm install --------
 echo "==> [4/8] Installing npm dependencies..."
 cd "$APP_DIR"
-sudo -u "$APP_USER" -H bash -c "cd '$APP_DIR' && npm ci --omit=dev --no-audit --no-fund"
+# PUPPETEER_SKIP_DOWNLOAD=1 prevents puppeteer's postinstall from downloading its
+# bundled chromium (~280 MB) -- we install Chrome beta 149 separately in step 5.
+sudo -u "$APP_USER" -H bash -c "cd '$APP_DIR' && PUPPETEER_SKIP_DOWNLOAD=1 npm ci --omit=dev --no-audit --no-fund"
 
 # -------- 5. Install Chrome beta (>=149) --------
 CHROME_BIN=""
