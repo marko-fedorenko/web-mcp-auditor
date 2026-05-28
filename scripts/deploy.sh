@@ -137,12 +137,11 @@ MemoryMax=1500M
 StandardOutput=journal
 StandardError=journal
 
-# Hardening
+# Hardening (kept moderate — Chrome/Puppeteer need writable $HOME for cache dirs)
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectHome=true
 ProtectSystem=strict
-ReadWritePaths=$APP_DIR
+ReadWritePaths=$APP_DIR /home/$APP_USER
 CapabilityBoundingSet=
 
 [Install]
