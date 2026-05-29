@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="./">
+  <title>Web MCP Demo — Task Tracker</title>
+  <meta name="description" content="Live demo of Web MCP: a task tracker that exposes 6 tools to AI agents via navigator.modelContext, plus a declaratively-annotated form.">
+  <meta name="robots" content="index, follow">
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <header class="demo-header">
+    <div class="container">
+      <a href="../" class="back-link">← Back to auditor</a>
+      <h1>Web MCP Demo · Task Tracker</h1>
+      <p class="lede">
+        This page registers <strong>6 tools</strong> via <code>navigator.modelContext.registerTool()</code> and <strong>1 declaratively-annotated form</strong>.
+        An AI agent (or our <a href="../?execute=on" target="_blank">auditor with Execute mode</a>) can add, complete, delete, filter, and clear tasks programmatically.
+      </p>
+    </div>
+  </header>
+
+  <main class="container demo-main">
+    <section class="left-col">
+      <div class="card">
+        <h2>Tasks</h2>
+        <ul id="task-list" class="task-list" aria-live="polite"></ul>
+        <p id="empty-state" class="empty-state hidden">No tasks yet. Add one below.</p>
+      </div>
+
+      <!-- Declarative API: agents can fill this form via the toolname/toolparam* attributes. -->
+      <form id="quick-add-form" class="card quick-add"
+            toolname="quick_add_task"
+            tooldescription="Quickly add a single new task to the tracker. The new task is created with medium priority and no tag.">
+        <h3>Quick add (declarative)</h3>
+        <p class="muted">This form is annotated with <code>toolname</code> + <code>toolparamdescription</code>. The orange outline below appears when an agent is filling the form (<code>:tool-form-active</code>).</p>
+        <div class="form-row">
+          <label for="quick-title" class="visually-hidden">Task title</label>
+          <input id="quick-title" name="title" type="text" required
+                 maxlength="200" minlength="3"
+                 placeholder="e.g. Review pull request #42"
+                 toolparamtitle="Task title"
+                 toolparamdescription="Short description of what needs to be done. Required, 3-200 characters.">
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="right-col">
+      <div class="card stats-card">
+        <h2>Stats</h2>
+        <div class="stat-row"><span>Total</span><strong id="stat-total">0</strong></div>
+        <div class="stat-row"><span>Done</span><strong id="stat-done">0</strong></div>
+        <div class="stat-row"><span>Pending</span><strong id="stat-pending">0</strong></div>
+        <div class="stat-row"><span>Completion</span><strong id="stat-pct">0%</strong></div>
+        <hr>
+        <div class="stat-row"><span>High priority</span><strong id="stat-high">0</strong></div>
+        <div class="stat-row"><span>Medium</span><strong id="stat-medium">0</strong></div>
+        <div class="stat-row"><span>Low</span><strong id="stat-low">0</strong></div>
+      </div>
+
+      <div class="card mcp-card">
+        <h3>Registered tools</h3>
+        <ol class="tool-list" id="tool-list"></ol>
+        <p class="muted">All registered via <code>navigator.modelContext.registerTool()</code>. Audit this page in the <a href="../">auditor</a> to inspect their schemas.</p>
+      </div>
+
+      <div class="card event-log-card">
+        <h3>Activity log</h3>
+        <ul class="event-log" id="event-log" aria-live="polite"></ul>
+        <p class="muted">Every tool invocation appears here, with the input the agent provided.</p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="demo-footer">
+    <div class="container">
+      <span>Source: <a href="https://github.com/marko-fedorenko/web-mcp-auditor/blob/main/public/demo" target="_blank" rel="noreferrer">github.com/marko-fedorenko/web-mcp-auditor</a></span>
+      ·
+      <span>Independent demo of the <a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noreferrer">Web MCP draft</a></span>
+    </div>
+  </footer>
+
+  <script type="module" src="demo.js"></script>
+</body>
+</html>

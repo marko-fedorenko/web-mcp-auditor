@@ -25,6 +25,15 @@ const BASE_PATH = normalizeBase(process.env.BASE_PATH);
 const router = express.Router();
 
 router.use(express.json({ limit: '32kb' }));
+
+// /demo/ — a real-world WebMCP example (task tracker). Set an explicit
+// Permissions-Policy: tools=self so the safety check passes.
+router.use('/demo', express.static(join(__dirname, 'public', 'demo'), {
+  setHeaders: (res) => {
+    res.setHeader('Permissions-Policy', 'tools=self');
+  }
+}));
+
 router.use(express.static(join(__dirname, 'public')));
 router.use('/fixtures', express.static(join(__dirname, 'test', 'fixtures'), {
   setHeaders: (res) => {
